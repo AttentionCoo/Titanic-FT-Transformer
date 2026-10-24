@@ -1,0 +1,27 @@
+{
+  "model": "v1 FT-Transformer (legacy)",
+  "published_in_readme": 0.8451,
+  "published_remeasured": {
+    "fold_accuracy": [
+      0.8324022346368715,
+      0.8370786516853933,
+      0.8202247191011236,
+      0.8426966292134831,
+      0.8370786516853933
+    ],
+    "accuracy_mean": 0.8338961772644531,
+    "accuracy_std": 0.007574230974471766,
+    "elapsed_seconds": 94.70298433303833
+  },
+  "honest_fixed_80ep": {
+    "per_repeat_accuracy": [
+      0.8305191136777352,
+      0.8204255853367648,
+      0.8159186491745654
+    ],
+    "accuracy_mean": 0.8222877827296884,
+    "accuracy_std": 0.006104327714812372,
+    "n_repeats": 3,
+    "elapsed_seconds": 678.6839544773102
+  }
+}

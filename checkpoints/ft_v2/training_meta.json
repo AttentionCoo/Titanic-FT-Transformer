@@ -1,0 +1,53 @@
+{
+  "model": "ft_transformer_v2",
+  "feature_spec": {
+    "num_cols": [
+      "Age",
+      "FareLog",
+      "FarePerPersonLog",
+      "SibSp",
+      "Parch",
+      "FamilySize",
+      "CabinNum",
+      "AgeMissing"
+    ],
+    "cat_cols": [
+      "Pclass",
+      "Sex",
+      "Title",
+      "Embarked",
+      "FamilyType",
+      "HasCabin",
+      "IsAlone",
+      "PclassSex"
+    ]
+  },
+  "ft_config": {
+    "d_token": 32,
+    "n_layers": 3,
+    "n_heads": 8,
+    "dropout": 0.2,
+    "drop_path": 0.1,
+    "ff_mult": 2.0,
+    "head_hidden": 64,
+    "use_feature_pool": true,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "batch_size": 64,
+    "epochs": 60,
+    "warmup_frac": 0.1,
+    "label_smoothing": 0.05,
+    "ema_decay": 0.995,
+    "seeds": [
+      42,
+      2024
+    ]
+  },
+  "cv": {
+    "n_splits": 5,
+    "n_repeats": 3,
+    "seed": 42
+  },
+  "checkpoint_pattern": "fold_{fold}_seed_{seed}.pt",
+  "note": "权重为 EMA 参数，可直接 load_state_dict 推理。"
+}

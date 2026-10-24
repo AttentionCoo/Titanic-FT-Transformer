@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,16 +8,25 @@ import seaborn as sns
 
 import matplotlib.font_manager as fm
 
-font_path = r'C:\Windows\Fonts\msyh.ttc'
-fm.fontManager.addfont(font_path)
-prop = fm.FontProperties(fname=font_path)
-font_name = prop.get_name()
-sns.set_style('whitegrid')
-plt.rcParams['font.sans-serif'] = [font_name]
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['axes.unicode_minus'] = False
+# 路径一律相对项目根目录解析，从任意工作目录运行都不会失效。
+ROOT = Path(__file__).resolve().parents[1]
+DATA_PATH = ROOT / 'data' / 'raw' / 'train.csv'
+FIGURES_DIR = ROOT / 'figures'
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
-df = pd.read_csv(r'D:\pycharmProject\Titanic\data\raw\train.csv')
+font_path = Path(r'C:\Windows\Fonts\msyh.ttc')
+if font_path.exists():
+    fm.fontManager.addfont(str(font_path))
+    prop = fm.FontProperties(fname=str(font_path))
+    font_name = prop.get_name()
+    sns.set_style('whitegrid')
+    plt.rcParams['font.sans-serif'] = [font_name]
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.rcParams['axes.unicode_minus'] = False
+else:
+    sns.set_style('whitegrid')
+
+df = pd.read_csv(DATA_PATH)
 
 print("=" * 60)
 print("1. 数据基本信息")
@@ -42,7 +54,7 @@ fig, ax = plt.subplots(figsize=(8, 4))
 sns.heatmap(df.isnull(), cbar=True, yticklabels=False, cmap='YlOrRd', ax=ax)
 ax.set_title('缺失值热力图')
 plt.tight_layout()
-plt.savefig(r'D:\pycharmProject\Titanic\figures\missing_values_heatmap.png', dpi=150)
+plt.savefig(FIGURES_DIR / 'missing_values_heatmap.png', dpi=150)
 plt.close()
 print("→ 缺失值热力图已保存至 figures/missing_values_heatmap.png")
 
@@ -65,7 +77,7 @@ for p in axes[1].patches:
     axes[1].annotate(f'{int(p.get_height())}', (p.get_x() + p.get_width() / 2., p.get_height()),
                      ha='center', va='bottom')
 plt.tight_layout()
-plt.savefig(r'D:\pycharmProject\Titanic\figures\survived_distribution.png', dpi=150)
+plt.savefig(FIGURES_DIR / 'survived_distribution.png', dpi=150)
 plt.close()
 print("→ 生还分布图已保存至 figures/survived_distribution.png")
 
@@ -89,7 +101,7 @@ for i, col in enumerate(categorical_cols):
     axes[i].legend(['遇难', '生还'])
 
 plt.tight_layout()
-plt.savefig(r'D:\pycharmProject\Titanic\figures\categorical_vs_survived.png', dpi=150)
+plt.savefig(FIGURES_DIR / 'categorical_vs_survived.png', dpi=150)
 plt.close()
 print("\n→ 分类特征图已保存至 figures/categorical_vs_survived.png")
 
@@ -109,7 +121,7 @@ for i, col in enumerate(numerical_cols):
     axes[i].legend()
 
 plt.tight_layout()
-plt.savefig(r'D:\pycharmProject\Titanic\figures\numerical_distribution.png', dpi=150)
+plt.savefig(FIGURES_DIR / 'numerical_distribution.png', dpi=150)
 plt.close()
 print("→ 数值特征分布图已保存至 figures/numerical_distribution.png")
 
@@ -134,7 +146,7 @@ for p in ax.patches:
 ax.set_title('各年龄段生还率')
 ax.set_ylabel('生还率(%)')
 plt.tight_layout()
-plt.savefig(r'D:\pycharmProject\Titanic\figures\age_group_survival.png', dpi=150)
+plt.savefig(FIGURES_DIR / 'age_group_survival.png', dpi=150)
 plt.close()
 print("→ 年龄段生还率图已保存至 figures/age_group_survival.png")
 
@@ -160,7 +172,7 @@ sns.heatmap(corr_matrix, mask=mask, annot=True, fmt='.2f', cmap='RdBu_r',
             center=0, vmin=-1, vmax=1, linewidths=0.5, square=True, ax=ax)
 ax.set_title('Titanic 特征相关性热力图')
 plt.tight_layout()
-plt.savefig(r'D:\pycharmProject\Titanic\figures\correlation_heatmap.png', dpi=150)
+plt.savefig(FIGURES_DIR / 'correlation_heatmap.png', dpi=150)
 plt.close()
 print("→ 相关性热力图已保存至 figures/correlation_heatmap.png")
 
@@ -181,20 +193,21 @@ print(f"\n独自一人: 生还率 {alone_survival[1]:.2f}%")
 print(f"有家人陪伴: 生还率 {alone_survival[0]:.2f}%")
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-sns.barplot(x=family_survival.index, y='生还率(%)', data=family_survival, palette='YlGn', ax=axes[0])
+sns.barplot(x=family_survival.index, y='生还率(%)', hue=family_survival.index,
+            data=family_survival, palette='YlGn', legend=False, ax=axes[0])
 axes[0].set_title('家庭规模与生还率')
 axes[0].set_xlabel('家庭规模')
 axes[0].set_ylabel('生还率(%)')
 
 sns.barplot(x=['有家人', '独自一人'], y=[alone_survival[0], alone_survival[1]],
-            palette=['#4ECDC4', '#FF6B6B'], ax=axes[1])
+            hue=['有家人', '独自一人'], palette=['#4ECDC4', '#FF6B6B'], legend=False, ax=axes[1])
 axes[1].set_title('是否独自一人与生还率')
 axes[1].set_ylabel('生还率(%)')
 for p in axes[1].patches:
     axes[1].annotate(f'{p.get_height():.1f}%', (p.get_x() + p.get_width() / 2., p.get_height()),
                      ha='center', va='bottom')
 plt.tight_layout()
-plt.savefig(r'D:\pycharmProject\Titanic\figures\family_survival.png', dpi=150)
+plt.savefig(FIGURES_DIR / 'family_survival.png', dpi=150)
 plt.close()
 print("→ 家庭组合分析图已保存至 figures/family_survival.png")
 

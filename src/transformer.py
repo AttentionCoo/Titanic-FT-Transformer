@@ -1,3 +1,10 @@
+"""v1 FT-Transformer 基线（保留用于复现历史结果）。
+
+注意：这是项目最初的实现，已被 ``src/model.py`` + ``src/train.py`` 取代。
+它的验证协议会在验证折上挑选最优 epoch，且预处理在 train+test 全集上拟合，
+因此交叉验证分数偏乐观；v2 的评估见 ``python -m src.main``。
+"""
+
 import numpy as np
 import pandas as pd
 import torch
@@ -10,6 +17,7 @@ from sklearn.metrics import accuracy_score
 import copy
 import random
 import os
+from pathlib import Path
 
 # -------------------- 0. 全局设置 --------------------
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -18,22 +26,16 @@ random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 
+# 路径基于项目根目录，从任意工作目录运行都不会失效。
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / 'data' / 'raw'
+SAVE_DIR = ROOT / 'checkpoints' / 'legacy'
+SUBMISSION_PATH = ROOT / 'data' / 'submissions' / 'ft_transformer_v1_submission.csv'
+
 # -------------------- 1. 特征工程数据加载 --------------------
 def load_and_preprocess():
-    train = pd.read_csv('../data/raw/train.csv')
-    test = pd.read_csv('../data/raw/test.csv')
-
-    # ------------------- 原始特征 -------------------
-    features = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
-    target = 'Survived'
-
-    # 合并
-    all_data = pd.concat([train[features + ['Name']]], axis=0)  # 暂时先取训练集特征进行拟合，后面单独做特征工程
-    # 更规范：分别处理 train 和 test，然后统一编码
-    # 下面我们按完整流程做
-
-    train = pd.read_csv('../data/raw/train.csv')
-    test = pd.read_csv('../data/raw/test.csv')
+    train = pd.read_csv(DATA_DIR / 'train.csv')
+    test = pd.read_csv(DATA_DIR / 'test.csv')
     train['Type'] = 'train'
     test['Type'] = 'test'
     all_data = pd.concat([train, test], axis=0, sort=False).reset_index(drop=True)
@@ -306,7 +308,6 @@ def main():
     N_SPLITS = 5
     LABEL_SMOOTHING = 0.1
 
-    SAVE_DIR = '../checkpoints'
     os.makedirs(SAVE_DIR, exist_ok=True)
 
     skf = StratifiedKFold(n_splits=N_SPLITS, shuffle=True, random_state=SEED)
@@ -360,7 +361,7 @@ def main():
                 print(f'Epoch {epoch+1:3d} | Train Loss: {train_loss:.4f} | Val Acc: {val_acc:.4f}')
 
         model.load_state_dict(best_state)
-        save_path = os.path.join(SAVE_DIR, f'fold_{fold+1}.pt')
+        save_path = SAVE_DIR / f'fold_{fold+1}.pt'
         torch.save(best_state, save_path)
         print(f'Fold {fold+1} Best Val Acc: {best_acc:.4f} | Saved to {save_path}')
 
@@ -387,8 +388,8 @@ def main():
         'PassengerId': test_passenger_ids,
         'Survived': test_preds
     })
-    submission_path = '../data/submissions/ft_transformer_submission.csv'
-    os.makedirs(os.path.dirname(submission_path), exist_ok=True)
+    submission_path = SUBMISSION_PATH
+    os.makedirs(submission_path.parent, exist_ok=True)
     submission.to_csv(submission_path, index=False)
     print(f'Submission saved to {submission_path}')
     print(f'Test predictions distribution: {np.bincount(test_preds)}')
